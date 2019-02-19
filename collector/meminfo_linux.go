@@ -63,5 +63,8 @@ func parseMemInfo(r io.Reader) (map[string]float64, error) {
 		memInfo[key] = fv
 	}
 
+	// aggregate used bytes
+	memInfo["MemUsed_bytes"] = memInfo["MemTotal_bytes"] - memInfo["MemFree_bytes"] - memInfo["Cached_bytes"] - memInfo["Buffers_bytes"]
+
 	return memInfo, scanner.Err()
 }
