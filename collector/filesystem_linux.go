@@ -104,6 +104,7 @@ func (c *filesystemCollector) GetStats() ([]filesystemStats, error) {
 			size:      float64(buf.Blocks) * float64(buf.Bsize),
 			free:      float64(buf.Bfree) * float64(buf.Bsize),
 			avail:     float64(buf.Bavail) * float64(buf.Bsize),
+			used:      (float64(buf.Blocks) - float64(buf.Bfree)) * float64(buf.Bsize),
 			files:     float64(buf.Files),
 			filesFree: float64(buf.Ffree),
 			ro:        ro,

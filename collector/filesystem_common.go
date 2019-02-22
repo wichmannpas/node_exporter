@@ -43,11 +43,11 @@ var (
 )
 
 type filesystemCollector struct {
-	ignoredMountPointsPattern     *regexp.Regexp
-	ignoredFSTypesPattern         *regexp.Regexp
-	sizeDesc, freeDesc, availDesc *prometheus.Desc
-	filesDesc, filesFreeDesc      *prometheus.Desc
-	roDesc, deviceErrorDesc       *prometheus.Desc
+	ignoredMountPointsPattern               *regexp.Regexp
+	ignoredFSTypesPattern                   *regexp.Regexp
+	sizeDesc, freeDesc, availDesc, usedDesc *prometheus.Desc
+	filesDesc, filesFreeDesc                *prometheus.Desc
+	roDesc, deviceErrorDesc                 *prometheus.Desc
 }
 
 type filesystemLabels struct {
@@ -55,10 +55,10 @@ type filesystemLabels struct {
 }
 
 type filesystemStats struct {
-	labels            filesystemLabels
-	size, free, avail float64
-	files, filesFree  float64
-	ro, deviceError   float64
+	labels                  filesystemLabels
+	size, free, avail, used float64
+	files, filesFree        float64
+	ro, deviceError         float64
 }
 
 func init() {
@@ -86,6 +86,12 @@ func NewFilesystemCollector() (Collector, error) {
 	availDesc := prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, subsystem, "avail_bytes"),
 		"Filesystem space available to non-root users in bytes.",
+		filesystemLabelNames, nil,
+	)
+
+	usedDesc := prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, subsystem, "used_bytes"),
+		"Filesystem space used.",
 		filesystemLabelNames, nil,
 	)
 
@@ -119,6 +125,7 @@ func NewFilesystemCollector() (Collector, error) {
 		sizeDesc:                  sizeDesc,
 		freeDesc:                  freeDesc,
 		availDesc:                 availDesc,
+		usedDesc:                  usedDesc,
 		filesDesc:                 filesDesc,
 		filesFreeDesc:             filesFreeDesc,
 		roDesc:                    roDesc,
@@ -158,6 +165,10 @@ func (c *filesystemCollector) Update(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(
 			c.availDesc, prometheus.GaugeValue,
 			s.avail, s.labels.device, s.labels.mountPoint, s.labels.fsType,
+		)
+		ch <- prometheus.MustNewConstMetric(
+			c.usedDesc, prometheus.GaugeValue,
+			s.used, s.labels.device, s.labels.mountPoint, s.labels.fsType,
 		)
 		ch <- prometheus.MustNewConstMetric(
 			c.filesDesc, prometheus.GaugeValue,
